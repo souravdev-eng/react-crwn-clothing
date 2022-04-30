@@ -1,3 +1,4 @@
+import { async } from "@firebase/util";
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -5,6 +6,8 @@ import {
   signInWithPopup,
   GoogleAuthProvider,
 } from "firebase/auth";
+
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 // Initialize Firebase
 const firebaseConfig = {
@@ -28,3 +31,29 @@ provider.setCustomParameters({
 
 export const auth = getAuth();
 export const signInWithGooglePopup = () => signInWithPopup(auth, provider);
+
+// firestore
+
+export const db = getFirestore();
+
+export const createUserDocumentFromAuth = async (userAuth) => {
+  const userDocRef = doc(db, "users", userAuth.uid);
+  console.log(userDocRef);
+  const userSnaSnapshot = await getDoc(userDocRef);
+
+  // check if user exists in db
+  // create / set the document with the user data
+
+  if (!userSnaSnapshot.exists()) {
+    const { displayName, email } = userAuth;
+    const createdAt = new Date();
+
+    try {
+      await setDoc(userDocRef, { displayName, email, createdAt });
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  // user data does not exist in db
+  return userDocRef;
+};
